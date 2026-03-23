@@ -1262,10 +1262,10 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                     class="seg-field"
                     contenteditable="true"
                     :data-placeholder="seg.label"
-                    :ref="el => regField(el, idx, seg)"
+                    :ref="getRef(idx, seg)"
                     @keydown.tab.prevent="nextField(idx)"
                     @keydown.escape.prevent="exitFields"
-                    @input="e => seg.value = e.target.innerText"
+                    @input="onSegInput($event, seg)"
                     @focus="onFieldFocus($event, seg)"
                   ></span>
                 </template>
@@ -1400,7 +1400,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       <div class="prov-client-bar">
         <div class="prov-client-badge">
           <span class="badge-info">ℹ</span>
-          <span>{{ patients.find(p=>p.id===provSelectedClient)?.name }}</span>
+          <span>{{ provClientName }}</span>
           <button class="badge-x" @click="page='providers'; provSelectedClient=''; provSelectedProvider=null">&times;</button>
         </div>
         <button class="prov-client-badge-arrow">
@@ -1473,7 +1473,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <div v-for="prov in (providersList[provSelectedClient]||[])"
                :key="prov.id"
                class="prov-list-row"
-               :class="{selected: provSelectedProvider && provSelectedProvider.id===prov.id}"
+               :class="{selected: provSelectedProvider &amp;&amp; provSelectedProvider.id===prov.id}"
                @click="provSelectedProvider=prov">
             <div class="prov-avatar">
               <svg viewBox="0 0 24 24" fill="#6a8fad"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg>
@@ -1514,7 +1514,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       <div class="prov-client-bar">
         <div class="prov-client-badge">
           <span class="badge-info">ℹ</span>
-          <span>{{ patients.find(p=>p.id===provSelectedClient)?.name || 'No client selected' }}</span>
+          <span>{{ provClientName || 'No client selected' }}</span>
           <button class="badge-x" v-if="provSelectedClient" @click="provSelectedClient=''">&times;</button>
         </div>
         <button class="prov-client-badge-arrow">
@@ -1629,7 +1629,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       </div>
 
       <!-- Filter card -->
-      <div class="util-filter-card" v-click-outside="() => utilOpenDrop=''">
+      <div class="util-filter-card" v-click-outside="closeUtilDrop">
 
         <!-- Tabs -->
         <div class="util-filter-tabs">
@@ -1720,7 +1720,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
             <div class="util-filter-field">
               <label>Intake Type</label>
               <div class="util-sd-wrap" :class="{' util-sd-disabled': !utilFilters.intakeCategory}">
-                <div class="util-sd-box" :class="{open: utilOpenDrop==='intakeType', 'util-sd-disabled': !utilFilters.intakeCategory}" @click.stop="utilFilters.intakeCategory && utilToggleDrop('intakeType')">
+                <div class="util-sd-box" :class="{open: utilOpenDrop==='intakeType', 'util-sd-disabled': !utilFilters.intakeCategory}" @click.stop="utilFilters.intakeCategory &amp;&amp; utilToggleDrop('intakeType')">
                   <div class="util-sd-display">
                     <span :class="utilFilters.intakeType ? '' : 'util-sd-placeholder'">{{ utilFilters.intakeType || 'Select / All' }}</span>
                     <div class="util-sd-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -1932,7 +1932,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       </div>
 
       <!-- Top fields: Auth Number + Member, then Owner -->
-      <div class="auth-top-grid" v-click-outside="() => authOpenDrop=''">
+      <div class="auth-top-grid" v-click-outside="closeAuthDrop">
 
         <!-- Auth Number (auto-generated, readonly) -->
         <div class="auth-field">
@@ -1962,7 +1962,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
         <div class="auth-field">
           <label>Owner <span class="req">*</span></label>
           <div class="auth-sd-wrap">
-            <div class="auth-sd-box" :class="{open: authOpenDrop==='owner', disabled: !authForm.member}" @click.stop="authForm.member && (authOpenDrop = authOpenDrop==='owner' ? '' : 'owner')">
+            <div class="auth-sd-box" :class="{open: authOpenDrop==='owner', disabled: !authForm.member}" @click.stop="authForm.member &amp;&amp; (authOpenDrop = authOpenDrop==='owner' ? '' : 'owner')">
               <div class="auth-sd-display">
                 <span class="auth-sd-val" :class="authForm.owner ? '' : 'auth-sd-placeholder'">{{ authForm.owner || '-Select Owner-' }}</span>
                 <div class="auth-sd-arrow-btn"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -2061,7 +2061,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       </div><!-- /auth-provider-grid -->
 
       <!-- ── Requester Section ── -->
-      <div class="auth-requester-section" v-click-outside="() => authOpenDrop=''">
+      <div class="auth-requester-section" v-click-outside="closeAuthDrop">
         <div class="auth-half-grid">
           <div class="auth-field">
             <label>Requester Name</label>
@@ -2097,7 +2097,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
 
       <div class="auth-section-title">Authorization Type:</div>
 
-      <div class="auth-type-grid" v-click-outside="() => authOpenDrop=''">
+      <div class="auth-type-grid" v-click-outside="closeAuthDrop">
 
         <!-- COL 1: Request Category, Request Type, Service Type -->
         <div style="display:flex;flex-direction:column;gap:14px">
@@ -2119,7 +2119,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <div class="auth-field">
             <label>Request Type <span class="req">*</span></label>
             <div class="auth-sel-wrap">
-              <div class="auth-sel-box" :class="{open: authOpenDrop==='requestType', disabled: !authForm.requestCategory}" @click.stop="authForm.requestCategory && (authOpenDrop = authOpenDrop==='requestType' ? '' : 'requestType')">
+              <div class="auth-sel-box" :class="{open: authOpenDrop==='requestType', disabled: !authForm.requestCategory}" @click.stop="authForm.requestCategory &amp;&amp; (authOpenDrop = authOpenDrop==='requestType' ? '' : 'requestType')">
                 <div class="auth-sel-display">
                   <span class="auth-sel-val" :class="authForm.requestType ? '' : 'auth-sel-placeholder'">{{ authForm.requestType || '' }}</span>
                   <div class="auth-sel-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -2134,7 +2134,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <div class="auth-field">
             <label>Service Type </label>
             <div class="auth-sel-wrap">
-              <div class="auth-sel-box" :class="{open: authOpenDrop==='serviceType', disabled: !authForm.requestType}" @click.stop="authForm.requestType && (authOpenDrop = authOpenDrop==='serviceType' ? '' : 'serviceType')">
+              <div class="auth-sel-box" :class="{open: authOpenDrop==='serviceType', disabled: !authForm.requestType}" @click.stop="authForm.requestType &amp;&amp; (authOpenDrop = authOpenDrop==='serviceType' ? '' : 'serviceType')">
                 <div class="auth-sel-display">
                   <span class="auth-sel-val" :class="authForm.serviceType ? '' : 'auth-sel-placeholder'">{{ authForm.serviceType || '--Select Service Type--' }}</span>
                   <div class="auth-sel-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -2152,7 +2152,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <div class="auth-field">
             <label>Place of Service</label>
             <div class="auth-sel-wrap">
-              <div class="auth-sel-box" :class="{open: authOpenDrop==='placeOfService', disabled: !authForm.serviceType}" @click.stop="authForm.serviceType && (authOpenDrop = authOpenDrop==='placeOfService' ? '' : 'placeOfService')">
+              <div class="auth-sel-box" :class="{open: authOpenDrop==='placeOfService', disabled: !authForm.serviceType}" @click.stop="authForm.serviceType &amp;&amp; (authOpenDrop = authOpenDrop==='placeOfService' ? '' : 'placeOfService')">
                 <div class="auth-sel-display">
                   <span class="auth-sel-val" :class="authForm.placeOfService ? '' : 'auth-sel-placeholder'">{{ authForm.placeOfService || '--Select Place of Service--' }}</span>
                   <div class="auth-sel-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -2161,7 +2161,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
               <div class="auth-sel-drop" v-if="authOpenDrop==='placeOfService'" @click.stop style="max-height:220px;display:flex;flex-direction:column">
                 <div style="padding:6px 8px;border-bottom:1px solid #eee;flex-shrink:0"><input type="text" v-model="authDropSearch.placeOfService" placeholder="Search…" @click.stop style="width:100%;padding:4px 8px;border:1px solid #ccc;border-radius:3px;font-size:12px;outline:none"/></div>
                 <div style="overflow-y:auto;flex:1">
-                  <div class="auth-sel-item" v-for="o in utilOptions.placeOfService.filter(o => !authDropSearch.placeOfService || o.toLowerCase().includes(authDropSearch.placeOfService.toLowerCase()))" :key="o" :class="{selected:authForm.placeOfService===o}" @click="authForm.placeOfService=o; authForm.requestSource=''; authForm.priority=''; authForm.priorityRationale=''; authOpenDrop=''">{{ o }}</div>
+                  <div class="auth-sel-item" v-for="o in filteredPlaceOfService" :key="o" :class="{selected:authForm.placeOfService===o}" @click="authForm.placeOfService=o; authForm.requestSource=''; authForm.priority=''; authForm.priorityRationale=''; authOpenDrop=''">{{ o }}</div>
                 </div>
               </div>
             </div>
@@ -2170,7 +2170,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <div class="auth-field">
             <label>Request Source <span class="req">*</span></label>
             <div class="auth-sel-wrap">
-              <div class="auth-sel-box" :class="{open: authOpenDrop==='requestSource', disabled: !authForm.placeOfService}" @click.stop="authForm.placeOfService && (authOpenDrop = authOpenDrop==='requestSource' ? '' : 'requestSource')">
+              <div class="auth-sel-box" :class="{open: authOpenDrop==='requestSource', disabled: !authForm.placeOfService}" @click.stop="authForm.placeOfService &amp;&amp; (authOpenDrop = authOpenDrop==='requestSource' ? '' : 'requestSource')">
                 <div class="auth-sel-display">
                   <span class="auth-sel-val" :class="authForm.requestSource ? '' : 'auth-sel-placeholder'">{{ authForm.requestSource || '--Select Request Source--' }}</span>
                   <div class="auth-sel-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -2185,7 +2185,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <div class="auth-field">
             <label>Priority <span class="req">*</span></label>
             <div class="auth-sel-wrap">
-              <div class="auth-sel-box" :class="{open: authOpenDrop==='authPriority', disabled: !authForm.requestSource}" @click.stop="authForm.requestSource && (authOpenDrop = authOpenDrop==='authPriority' ? '' : 'authPriority')">
+              <div class="auth-sel-box" :class="{open: authOpenDrop==='authPriority', disabled: !authForm.requestSource}" @click.stop="authForm.requestSource &amp;&amp; (authOpenDrop = authOpenDrop==='authPriority' ? '' : 'authPriority')">
                 <div class="auth-sel-display">
                   <span class="auth-sel-val" :class="authForm.authPriority ? '' : 'auth-sel-placeholder'">{{ authForm.priority || '--Select Priority--' }}</span>
                   <div class="auth-sel-arrow"><svg viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
@@ -2336,7 +2336,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                     <span class="icd-code">{{ item.code }}</span>
                     <span class="icd-desc">{{ item.name }}</span>
                   </div>
-                  <div class="icd-loading" v-if="!dx.icdLoading && dx.icdResults.length === 0">No results</div>
+                  <div class="icd-loading" v-if="!dx.icdLoading &amp;&amp; dx.icdResults.length === 0">No results</div>
                 </div>
               </div>
             </td>
@@ -2464,7 +2464,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       <div class="auth-section-title" style="margin-top:28px">Status:</div>
       <hr style="border:none;border-top:1px solid #dce3ea;margin-bottom:16px"/>
 
-      <div class="auth-status-card" v-click-outside="() => authOpenDrop=''">
+      <div class="auth-status-card" v-click-outside="closeAuthDrop">
         <div class="auth-status-grid">
 
           <!-- Col 1: Begin Date, End Date -->
@@ -2540,18 +2540,18 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                 v-model="authForm.statusNotes"
                 style="min-height:130px"
                 placeholder="Type / to insert a template…"
-                @keydown="e => onApptFieldKD(e, 'statusNotes')"
-                @input="e => onApptFieldInput(e, 'statusNotes')"
+                @keydown="onStatusNotesKD"
+                @input="onStatusNotesInput"
               ></textarea>
               <div v-else class="appt-tfield-container" style="min-height:130px" ref="statusNotesFieldBox">
                 <template v-for="(seg, idx) in statusNotesFs.segments" :key="'sn'+idx">
                   <span v-if="seg.type==='text'" class="seg-text">{{ seg.value }}</span>
                   <span v-else class="seg-field" contenteditable="true"
                     :data-placeholder="seg.label"
-                    :ref="el => regApptField(el, 'statusNotes', idx, seg)"
+                    :ref="getApptRef('statusNotes', idx, seg)"
                     @keydown.tab.prevent="nextApptField('statusNotes', idx)"
                     @keydown.escape.prevent="exitApptFields('statusNotes')"
-                    @input="e => seg.value = e.target.innerText"
+                    @input="onSegInput($event, seg)"
                     @focus="onFieldFocus($event, seg)"
                   ></span>
                 </template>
@@ -2688,7 +2688,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
       </div>
 
       <!-- Filter card -->
-      <div class="util-filter-card" v-click-outside="() => grievanceOpenDrop=''">
+      <div class="util-filter-card" v-click-outside="closeGrievDrop">
 
         <!-- Tabs -->
         <div class="util-filter-tabs">
@@ -2727,7 +2727,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                 <div class="util-sd-dropdown" v-if="grievanceOpenDrop==='owner'" @click.stop>
                   <div class="util-sd-search"><input type="text" v-model="grievanceDropSearch.owner" placeholder="Search…" @click.stop/></div>
                   <div class="util-sd-list">
-                    <div class="util-sd-item" v-for="o in utilOptions.owner.filter(u => !grievanceDropSearch.owner || u.toLowerCase().includes(grievanceDropSearch.owner.toLowerCase()))" :key="o" :class="{selected:grievanceFilter.owner===o}" @click="grievanceSelectOption('owner',o)">{{ o }}</div>
+                    <div class="util-sd-item" v-for="o in filteredGrievOwner" :key="o" :class="{selected:grievanceFilter.owner===o}" @click="grievanceSelectOption('owner',o)">{{ o }}</div>
                   </div>
                 </div>
               </div>
@@ -3393,7 +3393,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                       <option value="Aid to Continue">Aid to Continue</option>
                       <option value="Criteria Met">Criteria Met</option>
                       <option value="Overturned">Overturned</option>
-                      <option value="Per P&P">Per P&amp;P</option>
+                      <option value="Per P&amp;P">Per P&amp;P</option>
                       <option value="Single Case Agreement">Single Case Agreement</option>
                       <option value="Transitional Care">Transitional Care</option>
                       <option value="Upheld">Upheld</option>
@@ -3423,7 +3423,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                     <button title="Align">≡</button>
                     <button title="Divider">—</button>
                   </div>
-                  <div class="griev-note-body" contenteditable="true" @input="e => grievanceForm.noteText = e.target.innerHTML"></div>
+                  <div class="griev-note-body" contenteditable="true" @input="onGrievNoteBodyInput"></div>
                 </div>
               </div>
 
@@ -3482,7 +3482,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                       <option value="Aid to Continue">Aid to Continue</option>
                       <option value="Criteria Met">Criteria Met</option>
                       <option value="Overturned">Overturned</option>
-                      <option value="Per P&P">Per P&amp;P</option>
+                      <option value="Per P&amp;P">Per P&amp;P</option>
                       <option value="Single Case Agreement">Single Case Agreement</option>
                       <option value="Transitional Care">Transitional Care</option>
                       <option value="Upheld">Upheld</option>
@@ -3512,10 +3512,10 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                       <span v-if="seg.type==='text'" class="seg-text">{{ seg.value }}</span>
                       <span v-else class="seg-field" contenteditable="true"
                         :data-placeholder="seg.label"
-                        :ref="el => regGrievField(el, idx, seg)"
+                        :ref="getGrievRef(idx, seg)"
                         @keydown.tab.prevent="nextGrievField(idx)"
                         @keydown.escape.prevent="exitGrievFields"
-                        @input="e => seg.value = e.target.innerText"
+                        @input="onSegInput($event, seg)"
                         @focus="onFieldFocus($event, seg)"
                       ></span>
                     </template>
@@ -3692,7 +3692,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
 
         <div class="tags-field">
           <label>Template Tags</label>
-          <div class="tags-dropdown-wrap" v-click-outside="() => tplTagsOpen=false">
+          <div class="tags-dropdown-wrap" v-click-outside="closeTplTags">
             <div class="tags-selected-box" :class="{open: tplTagsOpen}" @click="tplTagsOpen=!tplTagsOpen">
               <span v-if="tplForm.tags.length===0" class="tags-placeholder">Select tags…</span>
               <span v-for="tag in tplForm.tags" :key="tag" class="tag-chip">
@@ -4197,18 +4197,18 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
               v-if="!apptFs.purpose.hasFields"
               v-model="apptForm.purpose"
               placeholder="Type / to insert a template…"
-              @keydown="e => onApptFieldKD(e, 'purpose')"
-              @input="e => onApptFieldInput(e, 'purpose')"
+              @keydown="onPurposeKD"
+              @input="onPurposeInput"
             ></textarea>
             <div v-else class="appt-tfield-container" ref="purposeFieldBox">
               <template v-for="(seg, idx) in apptFs.purpose.segments" :key="'p'+idx">
                 <span v-if="seg.type==='text'" class="seg-text">{{ seg.value }}</span>
                 <span v-else class="seg-field" contenteditable="true"
                   :data-placeholder="seg.label"
-                  :ref="el => regApptField(el, 'purpose', idx, seg)"
+                  :ref="getApptRef('purpose', idx, seg)"
                   @keydown.tab.prevent="nextApptField('purpose', idx)"
                   @keydown.escape.prevent="exitApptFields('purpose')"
-                  @input="e => seg.value = e.target.innerText"
+                  @input="onSegInput($event, seg)"
                   @focus="onFieldFocus($event, seg)"
                 ></span>
               </template>
@@ -4238,18 +4238,18 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
               v-if="!apptFs.addl.hasFields"
               v-model="apptForm.addlInfo"
               placeholder="Type / to insert a template…"
-              @keydown="e => onApptFieldKD(e, 'addl')"
-              @input="e => onApptFieldInput(e, 'addl')"
+              @keydown="onAddlKD"
+              @input="onAddlInput"
             ></textarea>
             <div v-else class="appt-tfield-container" ref="addlFieldBox">
               <template v-for="(seg, idx) in apptFs.addl.segments" :key="'a'+idx">
                 <span v-if="seg.type==='text'" class="seg-text">{{ seg.value }}</span>
                 <span v-else class="seg-field" contenteditable="true"
                   :data-placeholder="seg.label"
-                  :ref="el => regApptField(el, 'addl', idx, seg)"
+                  :ref="getApptRef('addl', idx, seg)"
                   @keydown.tab.prevent="nextApptField('addl', idx)"
                   @keydown.escape.prevent="exitApptFields('addl')"
-                  @input="e => seg.value = e.target.innerText"
+                  @input="onSegInput($event, seg)"
                   @focus="onFieldFocus($event, seg)"
                 ></span>
               </template>
@@ -4307,7 +4307,7 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
                'selected': cell.isSelected,
                'empty': !cell.day
              }"
-             @click="cell.day && selectCalDay(cell)">
+             @click="cell.day &amp;&amp; selectCalDay(cell)">
           {{ cell.day || '' }}
         </div>
       </div>
@@ -4821,6 +4821,18 @@ const app = createApp({
         cells.push({ day:d, cur:true, isToday, isSelected });
       }
       return cells;
+    },
+    provClientName() {
+      const p = this.patients.find(function(p) { return p.id === this.provSelectedClient; }, this);
+      return p ? p.name : '';
+    },
+    filteredPlaceOfService() {
+      const q = (this.authDropSearch.placeOfService || '').toLowerCase();
+      return q ? this.utilOptions.placeOfService.filter(o => o.toLowerCase().includes(q)) : this.utilOptions.placeOfService;
+    },
+    filteredGrievOwner() {
+      const q = (this.grievanceDropSearch.owner || '').toLowerCase();
+      return q ? this.utilOptions.owner.filter(u => u.toLowerCase().includes(q)) : this.utilOptions.owner;
     },
     apptProviderOptions() {
       const clientProvs = (this.providersList[this.provSelectedClient] || []).map(p => p.name);
@@ -5645,6 +5657,37 @@ const app = createApp({
     showModal(title, msg, cb) {
       this.modal = { show:true, title, msg, cb };
     },
+
+    /* ── Safari-safe helpers (replaces inline arrow functions) ── */
+    getRef(idx, seg) {
+      const vm = this;
+      return function(el) { vm.regField(el, idx, seg); };
+    },
+    getApptRef(key, idx, seg) {
+      const vm = this;
+      return function(el) { vm.regApptField(el, key, idx, seg); };
+    },
+    getGrievRef(idx, seg) {
+      const vm = this;
+      return function(el) { vm.regGrievField(el, idx, seg); };
+    },
+    onSegInput(e, seg) {
+      seg.value = e.target.innerText;
+    },
+    onGrievNoteBodyInput(e) {
+      this.grievanceForm.noteText = e.target.innerHTML;
+    },
+    closeUtilDrop() { this.utilOpenDrop = ''; },
+    closeAuthDrop() { this.authOpenDrop = ''; },
+    closeGrievDrop() { this.grievanceOpenDrop = ''; },
+    closeTplTags() { this.tplTagsOpen = false; },
+    onStatusNotesKD(e) { this.onApptFieldKD(e, 'statusNotes'); },
+    onStatusNotesInput(e) { this.onApptFieldInput(e, 'statusNotes'); },
+    onPurposeKD(e) { this.onApptFieldKD(e, 'purpose'); },
+    onPurposeInput(e) { this.onApptFieldInput(e, 'purpose'); },
+    onAddlKD(e) { this.onApptFieldKD(e, 'addl'); },
+    onAddlInput(e) { this.onApptFieldInput(e, 'addl'); },
+
     doConfirm() {
       this.modal.show = false;
       if (this.modal.cb) this.modal.cb();
