@@ -3610,9 +3610,9 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
           <svg viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="20" rx="2"/><line x1="8" y1="7" x2="16" y2="7"/><line x1="8" y1="11" x2="16" y2="11"/></svg>
           Templates
         </button>
-        <button class="btn btn-blue" @click="page='tag-list'">
+        <button class="btn btn-blue" @click="page='metadata'">
           <svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
-          Tags
+          Metadata
         </button>
       </div>
       <p style="font-size:14px;color:#888;margin-top:4px">Select a settings category above.</p>
@@ -3731,40 +3731,86 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
 
 
     <!-- ══════════════════════════════════════════
-         TAGS LIST
+         METADATA (Tags + Categories)
     ══════════════════════════════════════════ -->
-    <template v-else-if="page==='tag-list'">
-      <h1 class="page-title">Settings &rsaquo; Tags</h1>
+    <template v-else-if="page==='metadata'">
+      <h1 class="page-title">Settings &rsaquo; Metadata</h1>
+
+      <!-- Back button -->
       <div class="tpl-action-bar">
-        <button class="btn btn-blue" @click="openTagForm(null)">
-          <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-          Add Tag
-        </button>
         <button class="btn btn-gray" @click="page='settings'">
           <svg viewBox="0 0 24 24"><polyline points="15 18 9 12 15 6"></polyline></svg>
           Back to Settings
         </button>
       </div>
 
-      <table class="tpl-table">
-        <thead>
-          <tr>
-            <th>Tag Name</th>
-            <th style="width:140px">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="(tag, idx) in availableTags" :key="tag">
-            <td>
-              <span class="tpl-tag-pill">{{ tag }}</span>
-            </td>
-            <td>
-              <button class="tpl-btn tpl-btn-edit" @click="openTagForm(tag, idx)">Edit</button>
-              <button class="tpl-btn tpl-btn-del" @click="askDeleteTag(tag, idx)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+      <!-- Tab bar -->
+      <div class="prov-tabs" style="margin-bottom:24px">
+        <div class="prov-tab" :class="{active: metadataTab==='tags'}"       @click="metadataTab='tags'">Tags</div>
+        <div class="prov-tab" :class="{active: metadataTab==='categories'}" @click="metadataTab='categories'">Categories</div>
+      </div>
+
+      <!-- ── TAGS TAB ── -->
+      <div v-if="metadataTab==='tags'">
+        <div class="tpl-action-bar">
+          <button class="btn btn-blue" @click="openTagForm(null)">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Tag
+          </button>
+        </div>
+        <table class="tpl-table">
+          <thead>
+            <tr>
+              <th>Tag Name</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(tag, idx) in availableTags" :key="tag">
+              <td><span class="tpl-tag-pill">{{ tag }}</span></td>
+              <td>
+                <button class="tpl-btn tpl-btn-edit" @click="openTagForm(tag, idx)">Edit</button>
+                <button class="tpl-btn tpl-btn-del"  @click="askDeleteTag(tag, idx)">Delete</button>
+              </td>
+            </tr>
+            <tr v-if="availableTags.length === 0">
+              <td colspan="2" style="padding:10px 14px;color:#aaa;font-style:italic;font-size:13px">No tags yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- ── CATEGORIES TAB ── -->
+      <div v-if="metadataTab==='categories'">
+        <div class="tpl-action-bar">
+          <button class="btn btn-blue" @click="openCategoryForm(null)">
+            <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            Add Category
+          </button>
+        </div>
+        <table class="tpl-table">
+          <thead>
+            <tr>
+              <th>Category Name</th>
+              <th>Description</th>
+              <th style="width:140px">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(cat, idx) in categories" :key="cat.id">
+              <td style="font-weight:600;color:#2a6496">{{ cat.name }}</td>
+              <td style="color:#555;font-size:13px">{{ cat.description }}</td>
+              <td>
+                <button class="tpl-btn tpl-btn-edit" @click="openCategoryForm(cat, idx)">Edit</button>
+                <button class="tpl-btn tpl-btn-del"  @click="askDeleteCategory(cat, idx)">Delete</button>
+              </td>
+            </tr>
+            <tr v-if="categories.length === 0">
+              <td colspan="3" style="padding:10px 14px;color:#aaa;font-style:italic;font-size:13px">No categories yet.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </template>
 
     <!-- ══════════════════════════════════════════
@@ -3790,6 +3836,35 @@ textarea.plain-notes:focus{border-color:#3a87c8;box-shadow:0 0 0 2px rgba(58,135
         </div>
       </div>
     </template>
+
+    <!-- ══════════════════════════════════════════
+         ADD / EDIT CATEGORY
+    ══════════════════════════════════════════ -->
+    <template v-else-if="page==='category-form'">
+      <h1 class="page-title">{{ categoryForm.id !== null ? 'Edit Category' : 'Add Category' }}</h1>
+      <div class="tpl-form-card">
+        <div class="field">
+          <label>Category Name <span class="req">*</span></label>
+          <input type="text" v-model="categoryForm.name" placeholder="e.g. Behavioral Health"/>
+          <div class="hint">Categories are used to classify templates and notes.</div>
+        </div>
+        <div class="field">
+          <label>Description</label>
+          <input type="text" v-model="categoryForm.description" placeholder="Optional description"/>
+        </div>
+        <div class="tpl-form-actions">
+          <button class="btn btn-green" @click="saveCategory">
+            <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+            Save
+          </button>
+          <button class="btn btn-red" @click="cancelCategoryForm">
+            <svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Cancel
+          </button>
+        </div>
+      </div>
+    </template>
+
 
   </main>
 </div>
@@ -4707,6 +4782,16 @@ const app = createApp({
 
       /* Template form */
       availableTags: ['Internal','External','Provider','Member / Patient','Care Team','Administrative'],
+      metadataTab: 'tags',
+      categories: [
+        { id:1, name:'Behavioral Health',  description:'Mental health and substance use related content' },
+        { id:2, name:'Care Management',    description:'Care coordination and case management content' },
+        { id:3, name:'Administrative',     description:'Administrative and operational content' },
+        { id:4, name:'Provider',           description:'Provider-facing communication content' },
+        { id:5, name:'Member / Patient',   description:'Member and patient-facing content' },
+      ],
+      _categoryId: 6,
+      categoryForm: { id: null, name: '', description: '' },
       tagForm: { id: null, name: '', description: '' },
       _tagId: 7,
       tplTagsOpen: false,
@@ -4857,7 +4942,7 @@ const app = createApp({
     },
     sidebarItems() {
       if (['providers','providers-directory','appointments','forms'].includes(this.page)) return this._providersSidebar;
-      if (['settings','tpl-list','tpl-form','tag-list','tag-form'].includes(this.page)) return this._settingsSidebar;
+      if (['settings','tpl-list','tpl-form','metadata','tag-form','category-form'].includes(this.page)) return this._settingsSidebar;
       if (['utilization','new-auth','grievances','new-grievance'].includes(this.page)) return this._utilizationSidebar;
       return this._interactionsSidebar;
     },
@@ -4935,7 +5020,7 @@ const app = createApp({
     isNavActive(p) {
       return p === 'utilization' ? ['utilization','new-auth','grievances','new-grievance'].includes(this.page)
            : p === 'interactions' ? ['interactions-list','interactions'].includes(this.page)
-           : p === 'settings'    ? ['settings','tpl-list','tpl-form','tag-list','tag-form'].includes(this.page)
+           : p === 'settings'    ? ['settings','tpl-list','tpl-form','metadata','tag-form','category-form'].includes(this.page)
            : p === 'providers'   ? ['providers','providers-directory'].includes(this.page)
            : this.page === p;
     },
@@ -5552,6 +5637,7 @@ const app = createApp({
     },
     openTagForm(tag, idx) {
       this.tagForm = tag !== null ? { id: idx, name: tag } : { id: null, name: '' };
+      this.metadataTab = 'tags';
       this.page = 'tag-form';
     },
     saveTag() {
@@ -5576,10 +5662,10 @@ const app = createApp({
         if (this.availableTags.includes(name)) { alert('That tag already exists.'); return; }
         this.availableTags.push(name);
       }
-      this.page = 'tag-list';
+      this.page = 'metadata';
     },
     cancelTagForm() {
-      this.page = 'tag-list';
+      this.page = 'metadata';
     },
     askDeleteTag(tag, idx) {
       this.showModal(
@@ -5688,6 +5774,40 @@ const app = createApp({
     onAddlKD(e) { this.onApptFieldKD(e, 'addl'); },
     onAddlInput(e) { this.onApptFieldInput(e, 'addl'); },
 
+    openCategoryForm(cat, idx) {
+      this.categoryForm = cat !== null ? { id: cat.id, name: cat.name, description: cat.description || '' } : { id: null, name: '', description: '' };
+      this.metadataTab = 'categories';
+      this.page = 'category-form';
+    },
+    saveCategory() {
+      if (!this.categoryForm.name.trim()) {
+        alert('Please enter a category name.');
+        return;
+      }
+      if (this.categoryForm.id !== null) {
+        const i = this.categories.findIndex(function(c) { return c.id === this.categoryForm.id; }, this);
+        if (i !== -1) this.categories[i] = { id: this.categoryForm.id, name: this.categoryForm.name.trim(), description: this.categoryForm.description.trim() };
+      } else {
+        if (this.categories.some(function(c) { return c.name.toLowerCase() === this.categoryForm.name.trim().toLowerCase(); }, this)) {
+          alert('A category with that name already exists.');
+          return;
+        }
+        this.categories.push({ id: this._categoryId++, name: this.categoryForm.name.trim(), description: this.categoryForm.description.trim() });
+      }
+      this.metadataTab = 'categories';
+      this.page = 'metadata';
+    },
+    cancelCategoryForm() {
+      this.metadataTab = 'categories';
+      this.page = 'metadata';
+    },
+    askDeleteCategory(cat, idx) {
+      this.showModal(
+        'Delete Category',
+        'Delete the category "' + cat.name + '"? This cannot be undone.',
+        function() { this.categories.splice(idx, 1); }.bind(this)
+      );
+    },
     doConfirm() {
       this.modal.show = false;
       if (this.modal.cb) this.modal.cb();
