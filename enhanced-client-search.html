@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enhanced Client Search — Helios Prototype</title>
+  <style>
+    /* ─── Reset & Base ─────────────────────────────────────────── */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+      background: #f0f2f5;
+      color: #1a1a2e;
+      font-size: 14px;
+    }
+
+    /* ─── Top Nav ───────────────────────────────────────────────── */
+    .top-nav {
+      background: #1a3a5c;
+      color: white;
+      display: flex;
+      align-items: center;
+      height: 48px;
+      padding: 0 20px;
+      gap: 2px;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+    }
+    .top-nav .logo {
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.5px;
+      margin-right: 28px;
+      color: white;
+    }
+    .top-nav a {
+      color: rgba(255,255,255,0.72);
+      text-decoration: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      font-size: 13px;
+      transition: background 0.15s, color 0.15s;
+    }
+    .top-nav a:hover { background: rgba(255,255,255,0.1); color: white; }
+    .top-nav a.active { background: rgba(255,255,255,0.18); color: white; font-weight: 600; }
+
+    /* ─── Layout ────────────────────────────────────────────────── */
+    .layout { display: flex; height: calc(100vh - 48px); overflow: hidden; }
+
+    /* ─── Sidebar ───────────────────────────────────────────────── */
+    .sidebar {
+      width: 210px;
+      background: #1e6db5;
+      color: white;
+      padding: 16px 0;
+      flex-shrink: 0;
+      overflow-y: auto;
+    }
+    .sidebar .section-label {
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 1.4px;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      padding: 10px 16px 5px;
+    }
+    .sidebar a {
+      display: block;
+      color: rgba(255,255,255,0.82);
+      text-decoration: none;
+      padding: 8px 16px;
+      font-size: 13px;
+      transition: background 0.12s;
+    }
+    .sidebar a:hover { background: rgba(255,255,255,0.1); color: white; }
+    .sidebar a.active {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      font-weight: 600;
+      border-left: 3px solid white;
+      padding-left: 13px;
+    }
+
+    /* ─── Main Content ──────────────────────────────────────────── */
+    .main { flex: 1; overflow-y: auto; padding: 28px 32px; }
+
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 20px; font-weight: 600; color: #1a3a5c; }
+    .page-header p { color: #777; font-size: 13px; margin-top: 4px; }
+
+    /* ─── Card ──────────────────────────────────────────────────── */
+    .card {
+      background: white;
+      border-radius: 6px;
+      border: 1px solid #dde1e7;
+      padding: 28px;
+      max-width: 680px;
+    }
+    .card h2 {
+      font-size: 14px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #1a3a5c;
+      margin-bottom: 20px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid #eef0f3;
+    }
+
+    /* ─── Form ──────────────────────────────────────────────────── */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: #555;
+      margin-bottom: 6px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .form-input {
+      width: 100%;
+      padding: 9px 12px;
+      border: 1px solid #ccd0d8;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #1a1a2e;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-input:focus {
+      border-color: #1a7abf;
+      box-shadow: 0 0 0 3px rgba(26,122,191,0.12);
+    }
+    textarea.form-input { resize: vertical; min-height: 88px; }
+
+    /* ─── Client Search ─────────────────────────────────────────── */
+    .client-search-wrapper { position: relative; }
+
+    .client-search-input {
+      width: 100%;
+      padding: 9px 36px 9px 12px;
+      border: 1px solid #ccd0d8;
+      border-radius: 4px;
+      font-size: 14px;
+      color: #1a1a2e;
+      outline: none;
+      font-family: inherit;
+      transition: border-color 0.15s, box-shadow 0.15s;
+      background: white url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23aaa' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat right 11px center;
+    }
+    .client-search-input:focus {
+      border-color: #1a7abf;
+      box-shadow: 0 0 0 3px rgba(26,122,191,0.12);
+    }
+    .client-search-input::placeholder { color: #aab0ba; }
+    .client-search-input:disabled { background-color: #f5f6f8; color: #aaa; cursor: not-allowed; }
+
+    /* ─── Dropdown ──────────────────────────────────────────────── */
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 5px);
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ccd0d8;
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.12);
+      z-index: 300;
+      overflow: hidden;
+      display: none;
+    }
+    .search-dropdown.visible { display: block; }
+
+    /* Loading state */
+    .dropdown-loading {
+      padding: 14px 16px;
+      color: #888;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid #dde1e7;
+      border-top-color: #1a7abf;
+      border-radius: 50%;
+      animation: spin 0.65s linear infinite;
+      flex-shrink: 0;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Empty state */
+    .dropdown-empty {
+      padding: 14px 16px;
+      color: #999;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    /* Result rows — GitHub-style stacked */
+    .result-row {
+      padding: 10px 14px;
+      cursor: pointer;
+      border-bottom: 1px solid #f0f2f5;
+      transition: background 0.1s;
+    }
+    .result-row:last-child { border-bottom: none; }
+    .result-row:hover,
+    .result-row.highlighted { background: #f0f6fc; }
+
+    .result-name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1a3a5c;
+      margin-bottom: 4px;
+    }
+    .result-meta {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+    .result-meta-item {
+      font-size: 12px;
+      color: #777;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .result-meta-label {
+      font-size: 11px;
+      color: #bbb;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+    }
+
+    /* Hint text below input */
+    .search-hint {
+      font-size: 11px;
+      color: #aaa;
+      margin-top: 5px;
+    }
+
+    /* ─── Selected Member Card ──────────────────────────────────── */
+    .selected-card {
+      display: none;
+      margin-top: 8px;
+      padding: 11px 14px;
+      background: #f0f6fc;
+      border: 1px solid #b3d4f0;
+      border-radius: 5px;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    .selected-card.visible { display: flex; }
+    .selected-card-info .name {
+      font-weight: 600;
+      font-size: 14px;
+      color: #1a3a5c;
+      margin-bottom: 3px;
+    }
+    .selected-card-info .meta {
+      font-size: 12px;
+      color: #666;
+      display: flex;
+      gap: 14px;
+    }
+    .selected-card-info .meta span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .selected-card-info .meta .lbl {
+      font-size: 11px;
+      color: #aaa;
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .change-btn {
+      font-size: 12px;
+      color: #1a7abf;
+      background: none;
+      border: 1px solid #1a7abf;
+      border-radius: 3px;
+      padding: 4px 10px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.12s, color 0.12s;
+    }
+    .change-btn:hover { background: #1a7abf; color: white; }
+
+    /* ─── Buttons ───────────────────────────────────────────────── */
+    .form-actions { display: flex; gap: 10px; margin-top: 6px; }
+    .btn {
+      padding: 9px 22px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+      transition: background 0.15s;
+    }
+    .btn-primary { background: #1a7abf; color: white; }
+    .btn-primary:hover { background: #1568a3; }
+    .btn-cancel { background: #e8eaed; color: #555; }
+    .btn-cancel:hover { background: #d5d8dc; }
+
+    /* ─── View Toggle (top-right nav) ──────────────────────────── */
+    .view-toggle {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .view-toggle-label {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      white-space: nowrap;
+    }
+    .toggle-group {
+      display: flex;
+      background: rgba(0,0,0,0.25);
+      border-radius: 5px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .toggle-group input[type="radio"] { display: none; }
+    .toggle-group label {
+      padding: 4px 12px;
+      border-radius: 3px;
+      font-size: 12px;
+      color: rgba(255,255,255,0.6);
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      white-space: nowrap;
+      user-select: none;
+    }
+    .toggle-group input[type="radio"]:checked + label {
+      background: #1a7abf;
+      color: white;
+      font-weight: 600;
+    }
+    .toggle-group label:hover { color: white; }
+
+    /* ─── CRM / Table-style dropdown ───────────────────────────── */
+    .crm-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .crm-table thead tr {
+      background: #1a7abf;
+      color: white;
+    }
+    .crm-table thead th {
+      padding: 7px 12px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .crm-table tbody tr {
+      border-bottom: 1px solid #f0f2f5;
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .crm-table tbody tr:last-child { border-bottom: none; }
+    .crm-table tbody tr:hover,
+    .crm-table tbody tr.highlighted { background: #f0f6fc; }
+    .crm-table tbody td {
+      padding: 8px 12px;
+      color: #333;
+      vertical-align: middle;
+    }
+    .crm-table tbody td.td-name {
+      font-weight: 600;
+      color: #1a3a5c;
+    }
+
+    /* ─── Proto badge ───────────────────────────────────────────── */
+    .proto-badge {
+      position: fixed;
+      bottom: 16px;
+      right: 16px;
+      background: #1a3a5c;
+      color: rgba(255,255,255,0.7);
+      font-size: 11px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Top Nav ──────────────────────────────────────────────────── -->
+<nav class="top-nav">
+  <div class="logo">Helios</div>
+  <a href="#">Admin</a>
+  <a href="#">Utilization</a>
+  <a href="#">Records</a>
+  <a href="#" class="active">Interact</a>
+  <a href="#">Calendar</a>
+  <a href="#">Providers</a>
+  <a href="#">Services</a>
+  <a href="#">Settings</a>
+  <a href="#">Help</a>
+
+  <!-- Result style toggle -->
+  <div class="view-toggle">
+    <span class="view-toggle-label">Result Style</span>
+    <div class="toggle-group">
+      <input type="radio" name="viewMode" id="modeStacked" value="stacked" checked>
+      <label for="modeStacked">Stacked</label>
+      <input type="radio" name="viewMode" id="modeCRM" value="crm">
+      <label for="modeCRM">Table</label>
+    </div>
+  </div>
+</nav>
+
+<div class="layout">
+
+  <!-- ── Sidebar ───────────────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="section-label">Interact</div>
+    <a href="#" class="active">New Interaction</a>
+    <a href="#">Interaction Log</a>
+    <a href="#">Outreach Queue</a>
+    <a href="#">Message Center</a>
+  </aside>
+
+  <!-- ── Main ──────────────────────────────────────────────────── -->
+  <main class="main">
+    <div class="page-header">
+      <h1>New Interaction</h1>
+      <p>Log a new member interaction</p>
+    </div>
+
+    <div class="card">
+      <h2>Interaction Details</h2>
+
+      <!-- Client Search Field -->
+      <div class="form-group">
+        <label>Client <span style="color:#c0392b">*</span></label>
+        <div class="client-search-wrapper">
+          <input
+            type="text"
+            id="clientSearch"
+            class="client-search-input"
+            placeholder="Search by name, Member ID, DOB, or other identifiers"
+            autocomplete="off"
+          />
+          <div class="search-dropdown" id="searchDropdown"></div>
+        </div>
+        <div class="search-hint" id="searchHint">Type at least 2 characters to search</div>
+
+        <!-- Selected member card (shown after selection) -->
+        <div class="selected-card" id="selectedCard">
+          <div class="selected-card-info">
+            <div class="name" id="selectedName"></div>
+            <div class="meta">
+              <span><span class="lbl">ID</span> <span id="selectedId"></span></span>
+              <span><span class="lbl">DOB</span> <span id="selectedDob"></span></span>
+              <span><span class="lbl">Plan</span> <span id="selectedPlan"></span></span>
+            </div>
+          </div>
+          <button class="change-btn" onclick="clearSelection()">Change</button>
+        </div>
+      </div>
+
+      <!-- Supporting fields (context only) -->
+      <div class="form-row">
+        <div class="form-group">
+          <label>Interaction Type</label>
+          <select class="form-input">
+            <option value="">— Select —</option>
+            <option>Inbound Call</option>
+            <option>Outbound Call</option>
+            <option>Email</option>
+            <option>Chat</option>
+            <option>In-Person</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Date</label>
+          <input type="date" class="form-input" value="2026-04-02" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea class="form-input" placeholder="Enter interaction notes..."></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button class="btn btn-primary">Save Interaction</button>
+        <button class="btn btn-cancel">Cancel</button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<div class="proto-badge">Prototype — Enhanced Client Search (O3)</div>
+
+<script>
+  // ── Member data (3 clients, two share a name to demo disambiguation) ──
+  const MEMBERS = [
+    {
+      id:    'M-100234',
+      name:  'John Smith',
+      dob:   '03/13/1985',
+      plan:  'BCBS Gold',
+      phone: '(555) 234-5678',
+      ssn4:  '4521'
+    },
+    {
+      id:    'M-100891',
+      name:  'John Smith',
+      dob:   '07/22/1972',
+      plan:  'BCBS Silver',
+      phone: '(555) 876-2341',
+      ssn4:  '8834'
+    },
+    {
+      id:    'M-100567',
+      name:  'Maria Johnson',
+      dob:   '11/05/1990',
+      plan:  'Aetna Bronze',
+      phone: '(555) 123-9876',
+      ssn4:  '2209'
+    }
+  ];
+
+  // ── DOM refs ──────────────────────────────────────────────────────────
+  const input        = document.getElementById('clientSearch');
+  const dropdown     = document.getElementById('searchDropdown');
+  const searchHint   = document.getElementById('searchHint');
+  const selectedCard = document.getElementById('selectedCard');
+  const selectedName = document.getElementById('selectedName');
+  const selectedId   = document.getElementById('selectedId');
+  const selectedDob  = document.getElementById('selectedDob');
+  const selectedPlan = document.getElementById('selectedPlan');
+
+  // ── State ─────────────────────────────────────────────────────────────
+  let debounceTimer    = null;
+  let currentResults   = [];
+  let highlightedIndex = -1;
+
+  // ── Search: matches against name, id, dob, ssn4, phone, plan ─────────
+  function search(raw) {
+    const q = raw.trim().toLowerCase();
+    if (!q) return [];
+    const qDigits = q.replace(/\D/g, '');
+
+    return MEMBERS.filter(m => {
+      const nameMatch  = m.name.toLowerCase().includes(q);
+      const idMatch    = m.id.toLowerCase().includes(q);
+      const planMatch  = m.plan.toLowerCase().includes(q);
+      const ssn4Match  = m.ssn4.includes(q);
+      // DOB: strip slashes from both sides so "03131985" and "03/13" both work
+      const dobNorm    = m.dob.replace(/\//g, '');
+      const qDobNorm   = q.replace(/\//g, '');
+      const dobMatch   = dobNorm.includes(qDobNorm) || m.dob.includes(q);
+      // Phone: digit-only comparison
+      const phoneMatch = qDigits.length >= 3 &&
+                         m.phone.replace(/\D/g, '').includes(qDigits);
+
+      return nameMatch || idMatch || planMatch || ssn4Match || dobMatch || phoneMatch;
+    });
+  }
+
+  // ── Active view mode ──────────────────────────────────────────────────
+  function getViewMode() {
+    return document.querySelector('input[name="viewMode"]:checked').value;
+  }
+
+  // Re-render when toggle changes (if dropdown is currently open)
+  document.querySelectorAll('input[name="viewMode"]').forEach(radio => {
+    radio.addEventListener('change', () => {
+      if (dropdown.classList.contains('visible') && currentResults.length > 0) {
+        showResults(currentResults);
+      }
+    });
+  });
+
+  // ── Render helpers ────────────────────────────────────────────────────
+  function showLoading() {
+    dropdown.innerHTML = `
+      <div class="dropdown-loading">
+        <div class="spinner"></div>
+        Searching members&hellip;
+      </div>`;
+    dropdown.classList.add('visible');
+  }
+
+  function showResults(results) {
+    currentResults   = results;
+    highlightedIndex = -1;
+
+    if (results.length === 0) {
+      dropdown.innerHTML = `
+        <div class="dropdown-empty">
+          No members found for &ldquo;${escHtml(input.value.trim())}&rdquo;
+        </div>`;
+    } else if (getViewMode() === 'crm') {
+      // ── CRM / table style ──
+      dropdown.innerHTML = `
+        <table class="crm-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Member ID</th>
+              <th>Date of Birth</th>
+              <th>Plan</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${results.map((m, i) => `
+              <tr data-index="${i}">
+                <td class="td-name">${escHtml(m.name)}</td>
+                <td>${escHtml(m.id)}</td>
+                <td>${escHtml(m.dob)}</td>
+                <td>${escHtml(m.plan)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+
+      dropdown.querySelectorAll('tbody tr').forEach(row => {
+        row.addEventListener('mousedown', e => {
+          e.preventDefault();
+          selectMember(parseInt(row.dataset.index, 10));
+        });
+      });
+    } else {
+      // ── Stacked / GitHub style ──
+      dropdown.innerHTML = results.map((m, i) => `
+        <div class="result-row" data-index="${i}">
+          <div class="result-name">${escHtml(m.name)}</div>
+          <div class="result-meta">
+            <span class="result-meta-item">
+              <span class="result-meta-label">ID</span>${escHtml(m.id)}
+            </span>
+            <span class="result-meta-item">
+              <span class="result-meta-label">DOB</span>${escHtml(m.dob)}
+            </span>
+            <span class="result-meta-item">
+              <span class="result-meta-label">Plan</span>${escHtml(m.plan)}
+            </span>
+          </div>
+        </div>
+      `).join('');
+
+      dropdown.querySelectorAll('.result-row').forEach(row => {
+        row.addEventListener('mousedown', e => {
+          e.preventDefault();
+          selectMember(parseInt(row.dataset.index, 10));
+        });
+      });
+    }
+
+    dropdown.classList.add('visible');
+  }
+
+  function hideDropdown() {
+    dropdown.classList.remove('visible');
+    highlightedIndex = -1;
+  }
+
+  function updateHighlight() {
+    // Works for both stacked (.result-row) and CRM (tbody tr)
+    const rows = getViewMode() === 'crm'
+      ? dropdown.querySelectorAll('tbody tr')
+      : dropdown.querySelectorAll('.result-row');
+    rows.forEach((row, i) => row.classList.toggle('highlighted', i === highlightedIndex));
+  }
+
+  // ── Selection ─────────────────────────────────────────────────────────
+  function selectMember(index) {
+    const m = currentResults[index];
+    if (!m) return;
+
+    hideDropdown();
+    input.value = '';
+    input.style.display = 'none';
+    searchHint.style.display = 'none';
+
+    selectedName.textContent = m.name;
+    selectedId.textContent   = m.id;
+    selectedDob.textContent  = m.dob;
+    selectedPlan.textContent = m.plan;
+    selectedCard.classList.add('visible');
+  }
+
+  function clearSelection() {
+    selectedCard.classList.remove('visible');
+    input.style.display = '';
+    searchHint.style.display = '';
+    input.value = '';
+    input.focus();
+  }
+
+  // ── Input events ──────────────────────────────────────────────────────
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    const q = input.value.trim();
+
+    if (q.length < 2) {
+      hideDropdown();
+      return;
+    }
+
+    showLoading();
+
+    debounceTimer = setTimeout(() => {
+      showResults(search(q));
+    }, 300);
+  });
+
+  input.addEventListener('keydown', e => {
+    const rows = getViewMode() === 'crm'
+      ? dropdown.querySelectorAll('tbody tr')
+      : dropdown.querySelectorAll('.result-row');
+    if (!dropdown.classList.contains('visible') || !rows.length) return;
+
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      highlightedIndex = Math.min(highlightedIndex + 1, rows.length - 1);
+      updateHighlight();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      highlightedIndex = Math.max(highlightedIndex - 1, 0);
+      updateHighlight();
+    } else if ((e.key === 'Enter' || e.key === 'Tab') && highlightedIndex >= 0) {
+      e.preventDefault();
+      selectMember(highlightedIndex);
+    } else if (e.key === 'Escape') {
+      hideDropdown();
+    }
+  });
+
+  input.addEventListener('blur', () => {
+    // Small delay so mousedown on a result row fires first
+    setTimeout(hideDropdown, 180);
+  });
+
+  input.addEventListener('focus', () => {
+    const q = input.value.trim();
+    if (q.length >= 2) showResults(search(q));
+  });
+
+  // ── Utility ───────────────────────────────────────────────────────────
+  function escHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+</script>
+</body>
+</html>
